@@ -308,3 +308,30 @@ dialog .row { margin: 0.75rem 0; }
 
 .err-text { color: var(--err) !important; }
 .ok-text { color: var(--ok) !important; }
+
+/* hover tooltips (data-tip), in addition to the native title */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+	content: attr(data-tip);
+	position: absolute;
+	left: 0;
+	bottom: calc(100% + 6px);
+	z-index: 20;
+	width: min(28rem, 80vw);
+	padding: 0.5rem 0.65rem;
+	background: #0b0d12;
+	color: var(--text);
+	border: 1px solid var(--accent);
+	border-radius: 8px;
+	font-size: 0.8rem;
+	font-weight: 400;
+	line-height: 1.35;
+	white-space: normal;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+	pointer-events: none;
+}
+label.field[data-tip] > span::after {
+	content: " ⓘ";
+	color: var(--muted);
+	font-size: 0.75rem;
+}

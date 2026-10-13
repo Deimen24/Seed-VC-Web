@@ -231,7 +231,9 @@ Settings in `.env` on the gaming PC:
      accent too.
 4. **Convert**. Jobs run one at a time; queue as many as you like.
 
-Parameter notes: *Diffusion steps* trades quality for time (10 for
+Every setting has a hover tooltip (the ⓘ marker) explaining what it
+does, which way to move it and what it costs. Parameter notes:
+*Diffusion steps* trades quality for time (10 for
 speech, 30 to 50 for singing, 50 to 100 for best quality). *Length
 adjust* speeds up or slows down the result. The CFG rates have subtle
 effects; the presets cover the useful range.

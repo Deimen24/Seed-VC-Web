@@ -1480,6 +1480,66 @@ function setup_realtime() {
 	window.addEventListener("beforeunload", () => rt_stop(""));
 }
 
+/* ---- tooltips -------------------------------------------------------- */
+
+/* selector -> explanation.  Applied as data-tip (styled hover) + title. */
+const TIPS = {
+	/* file conversion */
+	"[data-preset=fast]": "Fewest diffusion steps. Quick preview quality; a 30 s clip converts in a few seconds on an RTX card.",
+	"[data-preset=default]": "Balanced steps for everyday use.",
+	"[data-preset=quality]": "Many diffusion steps. Best result, several times slower. Use for the final take.",
+	"input[name=diffusion_steps]": "How many denoising passes the model makes. More = cleaner, more natural audio but linearly more GPU time. Speech: 10 is fine, 25-50 is better. Singing: 30-50. Above ~60 the gain is small.",
+	"input[name=length_adjust]": "Stretches or shortens the result. 0.8 = speaks 20% faster, 1.2 = 20% slower. Pitch is unchanged. 1.0 keeps the original timing.",
+	"input[name=cfg_rate]": "Classifier-free guidance. How strongly the model is pushed toward the reference voice. 0.7 is the sweet spot; lower = more natural but less similar, higher = more similar but can sound strained.",
+	"input[name=auto_f0_adjust]": "Shifts your pitch range to the reference speaker's typical range (e.g. male voice to a female reference). Good for speech. Turn off for singing so the melody stays exactly as sung.",
+	"input[name=pitch_shift]": "Transposes the result in semitones (12 = one octave). Use for singing when the song is in the wrong key for the target voice. Applies on top of auto pitch adjust.",
+	"input[name=intelligibility_cfg_rate]": "v2: pushes toward clear pronunciation of the source words. Raise if words become mushy; too high sounds robotic. 0 is the upstream default.",
+	"input[name=similarity_cfg_rate]": "v2: pushes toward the reference timbre. 0.7 default. Higher = closer voice, more artefacts.",
+	"input[name=top_p]": "v2 sampling: keep only the most likely tokens (nucleus). Lower = safer, more monotone; higher = more variation.",
+	"input[name=temperature]": "v2 sampling randomness. 1.0 default. Lower = more stable and repeatable, higher = more expressive but can drift.",
+	"input[name=repetition_penalty]": "v2 sampling: discourages repeating the same tokens. Raise slightly (1.2-1.5) if the output stutters or loops.",
+	"input[name=convert_style]": "v2: also copy the reference's accent, emotion and speaking style, not only the timbre. Changes how you sound, not just who you sound like.",
+	"input[name=anonymization_only]": "v2: ignore the reference and convert to a neutral 'average' voice. For hiding your identity without picking a target.",
+
+	/* real-time */
+	"#rt-allow-mic": "Asks the browser for microphone permission now. Needed once per site; only possible on HTTPS or localhost.",
+	"#rt-mic": "Which microphone to capture. Pick the physical headset mic, not a virtual cable.",
+	"#rt-out": "Where the converted voice is played. Choose a virtual audio cable (e.g. VB-Cable) to feed it into a game or call; Chrome/Edge only.",
+	"#rt-model": "Tiny: upstream real-time model, lowest delay, modest quality. Small: the file-conversion speech model streamed; clearly better voice, about 4x the GPU work, needs longer blocks.",
+	"#rt-fp16": "Half-precision maths. Roughly twice as fast with a very small quality loss. Auto-adjust turns this on first when the GPU is too slow.",
+	"#rt-gain": "Multiplies the microphone signal before conversion. Aim for speech around the -18 dB mark on the meter without CLIP. Too quiet = mumbly output, clipped = harsh output.",
+	"#rt-ns": "Browser noise suppression on the mic. Helps in noisy rooms; slightly colours the voice. Off with a good headset.",
+	"#rt-ec": "Browser echo cancellation. Only needed with speakers instead of headphones; degrades the voice otherwise.",
+	"#rt-agc": "Browser automatic gain. Keeps level steady but pumps on loud/quiet passages; prefer the manual Input gain.",
+	"#rt-ptt": "Push-to-talk: the mic is muted unless you hold the key or the button. Prevents breathing and room noise being converted. Conversion keeps running in the background so there is no start-up delay.",
+	"#rt-ptt-key": "Click, then press the key you want to hold for talking. Works while the browser tab has focus.",
+	"#rt-ptt-btn": "Hold with the mouse or finger to talk (alternative to the key).",
+	"[data-rt-preset=low]": "Shortest block and look-ahead, few steps: least delay (~0.4 s), roughest sound. Needs a fast GPU.",
+	"[data-rt-preset=balanced]": "Default: ~0.8 s delay, good sound on an RTX 3060 class card.",
+	"[data-rt-preset=quality]": "Long blocks and look-ahead, more steps: best live sound, ~2 s delay.",
+	"input[name=block_time]": "Seconds of audio converted per step. Longer = GPU has more time per block (less load) but every block adds that much delay. Auto-adjust raises this when the GPU is too slow.",
+	"#rt-params input[name=diffusion_steps]": "Denoising passes per block. 6 = fast, 10 = normal, 16+ = smoother but costs GPU time per block. If 'Compute per block' goes above ~75% lower this.",
+	"input[name=extra_time_right]": "Look-ahead: how much future audio the model sees before producing a block. More = better word endings and prosody; adds delay exactly 1:1 (0.5 s = +0.5 s delay).",
+	"input[name=extra_time_ce]": "Past audio the content encoder sees. More = more stable, consistent output; costs GPU time but no delay. Must be ≥ the DiT context.",
+	"input[name=extra_time]": "Past audio the DiT sees. More = smoother transitions between blocks; costs GPU time, no delay.",
+	"input[name=crossfade_time]": "Overlap used to blend consecutive blocks (SOLA). 50 ms hides seams; longer softens attacks. Rarely needs changing.",
+	"input[name=inference_cfg_rate]": "Guidance toward the reference voice, 0.7 default. Higher = more similar but can sound forced.",
+	"input[name=max_prompt_length]": "How many seconds of the reference clip define the target voice. Longer clean reference = closer timbre; costs GPU memory and a bit of start-up time, no added delay.",
+	"input[name=threshold_db]": "Noise gate. Blocks quieter than this are not converted (silence is sent). -60 = off. -45 to -35 is typical for a headset; too high cuts soft words. The gate holds over the look-ahead so word endings survive.",
+	"#rt-monitor": "Play the converted voice on the chosen output. Untick if you route it into a game and listen there, to avoid hearing yourself twice.",
+	"#rt-autotune": "When the GPU cannot keep up: first fp16, then a longer block, then the Tiny model, restarting the session automatically. Untick to keep your own settings.",
+};
+
+function setup_tips() {
+	for (const [sel, text] of Object.entries(TIPS)) {
+		for (const el of $$(sel)) {
+			const host = el.closest("label.field") || el;
+			host.setAttribute("data-tip", text);
+			host.title = text;
+		}
+	}
+}
+
 /* ---- init ------------------------------------------------------------ */
 
 async function init() {
@@ -1488,6 +1548,7 @@ async function init() {
 	setup_params();
 	setup_settings();
 	setup_realtime();
+	setup_tips();
 	$("#btn-convert").addEventListener("click", convert);
 	$("#btn-save-voice").addEventListener("click", save_voice);
 	$("#btn-clear-jobs").addEventListener("click", clear_jobs);
