@@ -1360,10 +1360,31 @@ function rt_stop(reason) {
 		rt_set_stats("stopped");
 }
 
+function rt_blocker() {
+	if (rt.running)
+		return "";
+	if (!window.isSecureContext || !navigator.mediaDevices)
+		return "Start is disabled: the browser only allows the microphone " +
+			"on HTTPS or http://localhost. Open the page through your " +
+			"HTTPS address (reverse proxy) instead of http://" +
+			location.host + ".";
+	if (!window.AudioWorkletNode)
+		return "Start is disabled: this browser has no AudioWorklet " +
+			"support. Use Chrome, Edge or Firefox.";
+	if (!state.slots.reference)
+		return "Start is disabled: pick a reference voice in card 2 first " +
+			"(upload, record, or choose one from the voice library).";
+	return "";
+}
+
 function rt_update_button() {
-	const ok = !!state.slots.reference && !rt.running &&
-		!!(navigator.mediaDevices && window.AudioWorkletNode);
-	$("#rt-start").disabled = !ok;
+	const why = rt_blocker();
+	$("#rt-start").disabled = !!why || rt.running;
+	$("#rt-start").title = why;
+	if (why)
+		rt_set_stats(why, "bad");
+	else if (!rt.running)
+		rt_set_stats("ready: press Start");
 }
 
 function setup_realtime() {
@@ -1384,8 +1405,7 @@ function setup_realtime() {
 		rt_apply_preset(b.dataset.rtPreset)));
 	$("#rt-start").addEventListener("click", rt_start);
 	$("#rt-stop").addEventListener("click", () => rt_stop(""));
-	if (!window.isSecureContext)
-		rt_set_stats("Real-time needs HTTPS or localhost (browser blocks the microphone otherwise).", "bad");
+	rt_update_button();
 	rt_list_devices();
 	if (navigator.mediaDevices)
 		navigator.mediaDevices.addEventListener("devicechange", rt_list_devices);
