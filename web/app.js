@@ -149,6 +149,7 @@ function render_model_pill(pill, fam, st) {
 		pill.title = st.load_errors[fam];
 	} else {
 		pill.textContent = fam + ": not loaded";
+		pill.title = "loads automatically when used";
 		pill.className = "pill";
 	}
 }

@@ -22,7 +22,7 @@
 		<span class="pill" id="pill-v2">v2: not loaded</span>
 		<span class="pill" id="pill-rt">rt: not loaded</span>
 		<span class="pill" id="pill-queue"></span>
-		<button class="btn small" id="btn-settings">Models</button>
+		<button class="btn small" id="btn-settings" title="Free or pre-load GPU memory. Models load by themselves when used.">GPU memory</button>
 	</div>
 </header>
 
@@ -298,7 +298,8 @@
 </main>
 
 <dialog id="settings">
-	<h2>Models &amp; system</h2>
+	<h2>GPU memory &amp; system</h2>
+	<p class="muted">Nothing here is required. Every model loads by itself the first time it is used (Convert or Start). Use these buttons only to free VRAM before gaming (<em>Unload</em>) or to warm a model up in advance (<em>Load</em>).</p>
 	<pre id="sysinfo">…</pre>
 	<div class="row">
 		<button class="btn" data-load="v1">Load v1</button>
@@ -308,7 +309,7 @@
 		<button class="btn" data-load="rt">Load real-time</button>
 		<button class="btn" data-unload="rt">Unload real-time</button>
 	</div>
-	<p class="muted">Models load automatically on first use; the first load also downloads several GB from HuggingFace. Unload to free VRAM for games.</p>
+	<p class="muted">The first load of each model also downloads several GB from HuggingFace, so the first Convert or Start takes a few minutes.</p>
 	<div class="row right">
 		<button class="btn" id="btn-settings-close">Close</button>
 	</div>

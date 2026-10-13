@@ -29,8 +29,9 @@ the real-time mode and speak through the reference voice live.
   cancel, download, and "use as source" to chain conversions.
 - Presets (fast / default / quality) and every Seed-VC parameter
   exposed with sensible defaults per model.
-- Models load on first use and can be **unloaded to free VRAM** for
-  games without stopping the server.
+- Models load by themselves on first use; the *GPU memory* button lets
+  you **unload them to free VRAM** for games without stopping the
+  server, or pre-load them.
 - **NVIDIA driver check**: the installer refuses to pick CUDA on a
   driver too old for the bundled CUDA 12.1 runtime and can update it.
 - **Runs at boot** as a systemd service or a Windows startup task,
@@ -341,7 +342,7 @@ The UI talks to a small JSON API (interactive docs at `/api/docs`):
   `update.bat -UpdateDriver` (or `./update.sh --update-driver`), reboot,
   start again. `tools/check_env.py --torch` shows what the server sees.
 - **Out of VRAM**: unload the family you are not using (header →
-  *Models*), lower diffusion steps, or close the game.
+  *GPU memory*), lower diffusion steps, or close the game.
 - **Slow first conversion**: model download and load; later ones are
   fast. Pre-download with `install.bat -DownloadModels`.
 - **HuggingFace unreachable**: set `HF_ENDPOINT=https://hf-mirror.com`
