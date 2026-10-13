@@ -542,10 +542,23 @@ def serve_file(kind: str, name: str):
 	return FileResponse(path)
 
 
+def _asset_version():
+	"""Newest mtime of the UI files, so asset URLs change on update."""
+	newest = 0
+	for p in settings.WEB_DIR.iterdir():
+		try:
+			newest = max(newest, int(p.stat().st_mtime))
+		except OSError:
+			pass
+	return str(newest)
+
+
 @app.get("/")
 def index():
-	return FileResponse(settings.WEB_DIR / "index.html",
-			    headers={"Cache-Control": "no-cache"})
+	html = (settings.WEB_DIR / "index.html").read_text(encoding="utf-8")
+	html = html.replace("?v=__VERSION__", "?v=" + _asset_version())
+	return Response(html, media_type="text/html",
+			headers={"Cache-Control": "no-cache"})
 
 
 app.mount("/static", StaticFiles(directory=str(settings.WEB_DIR)),

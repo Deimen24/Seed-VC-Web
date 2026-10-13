@@ -1501,6 +1501,21 @@ const TIPS = {
 	"input[name=convert_style]": "v2: also copy the reference's accent, emotion and speaking style, not only the timbre. Changes how you sound, not just who you sound like.",
 	"input[name=anonymization_only]": "v2: ignore the reference and convert to a neutral 'average' voice. For hiding your identity without picking a target.",
 
+	/* general */
+	"#model": "Voice conversion (v1): speech, fastest. Singing (v1 + F0): keeps the melody, 44.1 kHz, use for songs. Voice + accent (v2): also copies accent and speaking style, best at hiding your own voice, slower. Each family loads by itself on first use.",
+	"#btn-convert": "Queues the conversion of the source with the picked reference and model. Runs on the server; the result appears under Results with a player and download.",
+	"#btn-settings": "Shows GPU, VRAM and which model families are loaded. Nothing to do here normally; use it to free VRAM before gaming.",
+	"input[type=file][data-slot=source]": "Upload the recording whose voice should be changed. Any length; wav, mp3, flac, m4a, ogg, webm.",
+	"input[type=file][data-slot=reference]": "Upload a clean clip of the target voice (5-25 s, one speaker, no music). Then 'save to library' to keep it.",
+	"[data-record=source]": "Record the source with your microphone; stops on the second click and uploads.",
+	"[data-record=reference]": "Record a reference voice with your microphone; after stopping you give it a name and it is saved to the shared library.",
+	"select[data-examples=source]": "Sample clips shipped with Seed-VC to try the converter without your own file.",
+	"select[data-examples=reference]": "Sample target voices shipped with Seed-VC.",
+	"#btn-clear-jobs": "Removes finished, failed and cancelled jobs and deletes their output files from the server.",
+	"#btn-save-voice": "Stores the current reference in the shared voice library under a name so you and others can pick it later.",
+	"#rt-start": "Starts the live voice changer with the reference picked in card 2. Loads the model on first use (downloads once).",
+	"#rt-stop": "Stops the live session and releases the microphone.",
+
 	/* real-time */
 	"#rt-allow-mic": "Asks the browser for microphone permission now. Needed once per site; only possible on HTTPS or localhost.",
 	"#rt-mic": "Which microphone to capture. Pick the physical headset mic, not a virtual cable.",
@@ -1533,7 +1548,8 @@ const TIPS = {
 function setup_tips() {
 	for (const [sel, text] of Object.entries(TIPS)) {
 		for (const el of $$(sel)) {
-			const host = el.closest("label.field") || el;
+			/* file inputs are hidden inside a <label class="btn"> */
+			const host = el.closest("label.field") || el.closest("label.btn") || el;
 			host.setAttribute("data-tip", text);
 			host.title = text;
 		}
