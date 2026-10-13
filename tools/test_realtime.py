@@ -70,7 +70,8 @@ class StubModels:
 	def vocoder(self, mel):
 		n = mel.size(-1) * HOP
 		t = torch.arange(n, dtype=torch.float32) / SR
-		return (0.5 * torch.sin(2 * np.pi * 220 * t)).unsqueeze(0)
+		# half output, as a real vocoder gives under fp16 autocast
+		return (0.5 * torch.sin(2 * np.pi * 220 * t)).unsqueeze(0).half()
 
 
 def make_reference(path):

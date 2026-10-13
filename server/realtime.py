@@ -469,6 +469,9 @@ class RealtimeSession:
 				inference_cfg_rate=self.p["inference_cfg_rate"])
 			target = target[:, :, self.mel2.size(-1):]
 			wave = m.vocoder(target.float()).squeeze()
+		# Under fp16 autocast the vocoder returns half; everything after
+		# this point (SOLA, resampling) works in float32.
+		wave = wave.float()
 		out_len = self.return_length * self.sr // FRAMES_PER_SECOND
 		tail = self.skip_tail * self.sr // FRAMES_PER_SECOND
 		if tail > 0:
