@@ -115,8 +115,11 @@ function render_status() {
 		dev.className = "pill err";
 		dev.title = st.error || "";
 	} else if (st.device === "cuda") {
-		dev.textContent = st.gpu + " · " + st.vram_used_mb + "/" +
-			st.vram_total_mb + " MB";
+		const gb = mb => (mb / 1024).toFixed(1);
+		const all = st.vram_used_all_mb != null ?
+			" · card " + gb(st.vram_used_all_mb) + "/" + gb(st.vram_total_mb) + " GB" : "";
+		dev.textContent = st.gpu + " · this app " + gb(st.vram_used_mb) + " GB" + all;
+		dev.title = "VRAM: used by this server / used by all programs on the card (games, Ollama, …) / total";
 		dev.className = "pill ok";
 	} else {
 		dev.textContent = st.device.toUpperCase() + " (slow)";

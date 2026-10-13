@@ -160,7 +160,8 @@ class Engine:
 			"cuda": torch.version.cuda,
 			"gpu": None,
 			"vram_total_mb": None,
-			"vram_used_mb": None,
+			"vram_used_mb": None,		# this server's tensors
+			"vram_used_all_mb": None,	# whole card, every process
 			"loaded": {
 				"v1": self.v1 is not None,
 				"v2": self.v2 is not None,
@@ -177,6 +178,11 @@ class Engine:
 			info["vram_total_mb"] = props.total_memory // (1 << 20)
 			info["vram_used_mb"] = torch.cuda.memory_allocated(dev) \
 				// (1 << 20)
+			try:
+				free, total = torch.cuda.mem_get_info(dev)
+				info["vram_used_all_mb"] = (total - free) // (1 << 20)
+			except Exception:
+				pass
 		return info
 
 	# ---- loading ---------------------------------------------------
