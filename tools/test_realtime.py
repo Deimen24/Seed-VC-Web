@@ -98,14 +98,22 @@ def test_session(client_sr):
 		assert o.dtype == np.float32
 		assert np.isfinite(o).all()
 	assert np.abs(outs[-1]).max() > 0.05, "no audio produced"
+	# Quiet input: the pipeline keeps producing for `hold` blocks (the
+	# look-ahead delay), then goes silent.
+	half = info["block_samples"] // 2
+	for _ in range(s.hold):
+		held = s.process(quiet)
+		assert np.abs(held).max() > 0.05, "tail cut off during hold"
 	gated = s.process(quiet)
 	# The first samples still crossfade out the previous block (SOLA);
 	# the rest must be silent.
-	half = gated.shape[0] // 2
 	assert np.abs(gated[half:]).max() < 0.05, np.abs(gated[half:]).max()
-	assert s.stats["gated"] == 1
-	# push-to-talk released: loud input must be muted too
+	assert s.stats["gated"] >= 1
+	# push-to-talk released: same hold-over, then muted even for loud input
+	s.process(loud)
 	s.talk = False
+	for _ in range(s.hold):
+		s.process(loud)
 	muted = s.process(loud)
 	assert np.abs(muted[half:]).max() < 0.05
 	s.talk = True
@@ -152,13 +160,17 @@ def test_websocket():
 				assert len(data["bytes"]) == n * 4
 				got += 1
 		ws.send_text(json.dumps({"type": "talk", "on": False}))
-		ws.send_bytes(block.tobytes())
-		while True:
-			data = ws.receive()
-			if "bytes" in data and data["bytes"] is not None:
-				out = np.frombuffer(data["bytes"], dtype=np.float32)
-				assert np.abs(out[n // 2:]).max() < 0.05
-				break
+		hold = msg["hold_blocks"]
+		# one block at a time: the server queue is bounded and would
+		# drop a burst
+		for _ in range(hold + 1):
+			ws.send_bytes(block.tobytes())
+			while True:
+				data = ws.receive()
+				if "bytes" in data and data["bytes"] is not None:
+					out = np.frombuffer(data["bytes"], dtype=np.float32)
+					break
+		assert np.abs(out[n // 2:]).max() < 0.05
 		ws.send_text(json.dumps({"type": "stop"}))
 	assert not srv.rt_active
 	print("ok: websocket start/stream/talk/stop")

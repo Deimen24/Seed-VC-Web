@@ -281,6 +281,14 @@ class RealtimeSession:
 		self.talk = True		# push-to-talk: False mutes the input
 		self.fp16 = bool(self.p["fp16"]) and self.device.type == "cuda"
 		self._layout()
+		# Output lags input by the right context plus the SOLA overlap.
+		# After the input goes quiet (gate or push-to-talk released) keep
+		# inferring this many blocks so the tail of the last word is
+		# still produced instead of being cut.
+		self.hold = int(math.ceil((self.extra_frame_right +
+					   self.sola_buffer_frame) /
+					  self.block_frame)) + 1
+		self.hold_left = 0
 		wav, _ = librosa.load(str(reference_path), sr=self.sr)
 		self._prompt(wav)
 		self.in_res = Resampler(torch, self.client_sr, self.sr, self.device)
@@ -348,6 +356,7 @@ class RealtimeSession:
 			"client_sr": self.client_sr,
 			"block_samples": self.client_block,
 			"block_ms": round(1000.0 * self.block_frame / self.sr),
+			"hold_blocks": self.hold,
 			"algorithm_latency_ms": round(1000.0 * (
 				self.block_frame + self.extra_frame_right +
 				self.sola_buffer_frame) / self.sr),
@@ -390,7 +399,7 @@ class RealtimeSession:
 			block = self.in_res(block, self.block_frame)
 			self._push(block)
 			with self.torch.no_grad():
-				voiced = warm or (self.talk and self._voiced(block))
+				voiced = warm or self._active(block)
 				out = self._infer() if voiced else self._silence()
 				out = self._sola(out)
 				out = self.out_res(out, self.client_block)
@@ -420,6 +429,16 @@ class RealtimeSession:
 		want = avg * 1.5 / 1000.0
 		frame = 1.0 / FRAMES_PER_SECOND
 		return round(math.ceil(want / frame) * frame, 2)
+
+	def _active(self, block):
+		"""Gate/PTT decision with hold-over for the pipeline delay."""
+		if self.talk and self._voiced(block):
+			self.hold_left = self.hold
+			return True
+		if self.hold_left > 0:
+			self.hold_left -= 1
+			return True
+		return False
 
 	def _voiced(self, block):
 		thr = self.p["threshold_db"]
