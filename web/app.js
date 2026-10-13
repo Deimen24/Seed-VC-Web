@@ -129,27 +129,39 @@ function render_status() {
 	$("#sysinfo").textContent = JSON.stringify(st, null, 1);
 }
 
+const FAMILY_LABELS = {
+	v1: "Files: speech & singing",
+	v2: "Files: accent (v2)",
+	rt: "Live",
+};
+
 function render_model_pill(pill, fam, st) {
+	const label = FAMILY_LABELS[fam] || fam;
+	pill.title = {
+		v1: "Model family v1, used by 'Voice conversion' and 'Singing voice conversion' in the file converter",
+		v2: "Model family v2, used by 'Voice + accent conversion' in the file converter",
+		rt: "Real-time voice changer models",
+	}[fam] || "";
 	if (!st.ok) {
-		pill.textContent = fam + ": –";
+		pill.textContent = label + ": –";
 		pill.className = "pill";
 		return;
 	}
 	if (st.loading && st.loading.includes(fam)) {
-		pill.textContent = fam + ": loading…";
+		pill.textContent = label + ": loading…";
 		pill.className = "pill warn";
 	} else if (st.loaded && st.loaded[fam]) {
 		const names = fam === "rt" && st.rt_models && st.rt_models.length ?
-			st.rt_models.join(", ") : "loaded";
-		pill.textContent = fam + ": " + names;
+			st.rt_models.join(", ") : "in memory";
+		pill.textContent = label + ": " + names;
 		pill.className = "pill ok";
 	} else if (st.load_errors && st.load_errors[fam]) {
-		pill.textContent = fam + ": failed";
+		pill.textContent = label + ": failed";
 		pill.className = "pill err";
 		pill.title = st.load_errors[fam];
 	} else {
-		pill.textContent = fam + ": not loaded";
-		pill.title = "loads automatically when used";
+		pill.textContent = label + ": idle";
+		pill.title += " (loads automatically when used)";
 		pill.className = "pill";
 	}
 }

@@ -18,9 +18,9 @@
 	</div>
 	<div class="status" id="status">
 		<span class="pill" id="pill-device">connecting…</span>
-		<span class="pill" id="pill-v1">v1: not loaded</span>
-		<span class="pill" id="pill-v2">v2: not loaded</span>
-		<span class="pill" id="pill-rt">rt: not loaded</span>
+		<span class="pill" id="pill-v1">Files: speech &amp; singing: idle</span>
+		<span class="pill" id="pill-v2">Files: accent (v2): idle</span>
+		<span class="pill" id="pill-rt">Live: idle</span>
 		<span class="pill" id="pill-queue"></span>
 		<button class="btn small" id="btn-settings" title="Free or pre-load GPU memory. Models load by themselves when used.">GPU memory</button>
 	</div>
@@ -300,14 +300,15 @@
 <dialog id="settings">
 	<h2>GPU memory &amp; system</h2>
 	<p class="muted">Nothing here is required. Every model loads by itself the first time it is used (Convert or Start). Use these buttons only to free VRAM before gaming (<em>Unload</em>) or to warm a model up in advance (<em>Load</em>).</p>
+	<p class="muted"><strong>v1</strong> = the file-conversion models for speech and singing. <strong>v2</strong> = the file-conversion model that also converts accent and speaking style. <strong>Live</strong> = the real-time voice changer. Which one is used follows from your choice in “Model &amp; settings” or the live card.</p>
 	<pre id="sysinfo">…</pre>
 	<div class="row">
-		<button class="btn" data-load="v1">Load v1</button>
-		<button class="btn" data-unload="v1">Unload v1</button>
-		<button class="btn" data-load="v2">Load v2</button>
-		<button class="btn" data-unload="v2">Unload v2</button>
-		<button class="btn" data-load="rt">Load real-time</button>
-		<button class="btn" data-unload="rt">Unload real-time</button>
+		<button class="btn" data-load="v1">Load speech &amp; singing (v1)</button>
+		<button class="btn" data-unload="v1">Unload</button>
+		<button class="btn" data-load="v2">Load accent (v2)</button>
+		<button class="btn" data-unload="v2">Unload</button>
+		<button class="btn" data-load="rt">Load live</button>
+		<button class="btn" data-unload="rt">Unload</button>
 	</div>
 	<p class="muted">The first load of each model also downloads several GB from HuggingFace, so the first Convert or Start takes a few minutes.</p>
 	<div class="row right">

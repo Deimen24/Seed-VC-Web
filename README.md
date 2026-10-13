@@ -220,7 +220,8 @@ Settings in `.env` on the gaming PC:
    uploaded file is kept with *save to library*. The library is stored
    in `data/voices/` on the server and shared by everyone who uses the
    page. There are no per-user accounts.
-3. **Model**
+3. **Model** (v1 and v2 are the two Seed-VC model generations; the
+   header pills only show which generation is in GPU memory)
    - *Voice conversion (v1)*: speech, fastest, good default.
    - *Singing voice conversion (v1 + F0)*: pitch-conditioned 44.1 kHz
      model. Use it for singing; turn on *Auto pitch adjust* for speech
