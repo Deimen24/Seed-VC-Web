@@ -139,7 +139,12 @@ async def basic_auth(request: Request, call_next):
 			return Response("authentication required", status_code=401,
 					headers={"WWW-Authenticate":
 						 'Basic realm="Plachataa Web"'})
-	return await call_next(request)
+	response = await call_next(request)
+	# The UI files change with every update; make browsers revalidate
+	# them (ETag keeps that cheap) instead of serving stale scripts.
+	if "/static/" in request.url.path or request.url.path.endswith("/"):
+		response.headers["Cache-Control"] = "no-cache"
+	return response
 
 
 @app.get("/api/health")

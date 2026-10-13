@@ -1178,7 +1178,8 @@ async function rt_open_audio() {
 		ctx = new AudioContext({ latencyHint: "interactive" });
 	}
 	rt.ctx = ctx;
-	await ctx.audioWorklet.addModule("static/rt-worklet.js");
+	await ctx.audioWorklet.addModule("static/rt-worklet.js?v=" +
+		(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "0"));
 	const out_id = $("#rt-out").value;
 	if (out_id && ctx.setSinkId)
 		await ctx.setSinkId(out_id).catch(e => toast("output device: " + e.message, true));
