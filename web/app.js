@@ -139,7 +139,9 @@ function render_model_pill(pill, fam, st) {
 		pill.textContent = fam + ": loading…";
 		pill.className = "pill warn";
 	} else if (st.loaded && st.loaded[fam]) {
-		pill.textContent = fam + ": loaded";
+		const names = fam === "rt" && st.rt_models && st.rt_models.length ?
+			st.rt_models.join(", ") : "loaded";
+		pill.textContent = fam + ": " + names;
 		pill.className = "pill ok";
 	} else if (st.load_errors && st.load_errors[fam]) {
 		pill.textContent = fam + ": failed";

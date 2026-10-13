@@ -166,6 +166,7 @@ class Engine:
 				"v2": self.v2 is not None,
 				"rt": bool(self.rt),
 			},
+			"rt_models": sorted(self.rt),
 			"loading": sorted(self.loading),
 			"load_errors": self.load_errors,
 			"load_times": self.load_times,
