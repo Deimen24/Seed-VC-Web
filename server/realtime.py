@@ -276,7 +276,8 @@ class RealtimeSession:
 		self.sr = models.sr
 		self.client_sr = int(client_sr) if client_sr else self.sr
 		self.lock = threading.Lock()
-		self.stats = {"blocks": 0, "infer_ms": 0.0, "gated": 0}
+		self.stats = {"blocks": 0, "infer_ms": 0.0, "avg_ms": 0.0,
+			      "gated": 0}
 		self.talk = True		# push-to-talk: False mutes the input
 		self.fp16 = bool(self.p["fp16"]) and self.device.type == "cuda"
 		self._layout()
@@ -285,6 +286,20 @@ class RealtimeSession:
 		self.in_res = Resampler(torch, self.client_sr, self.sr, self.device)
 		self.out_res = Resampler(torch, self.sr, self.client_sr,
 					 self.device)
+		self._warm_up()
+
+	def _warm_up(self):
+		"""
+		Run the full pipeline on silence a few times so cuDNN autotuning
+		and allocator growth happen before the first real block; the
+		window stays all zeros, so this does not change state.
+		"""
+		zeros = np.zeros(self.client_block, dtype=np.float32)
+		for _ in range(3):
+			self.process(zeros, warm=True)
+		self.stats = {"blocks": 0, "infer_ms": 0.0, "avg_ms": 0.0,
+			      "gated": 0}
+		self.sola_buffer.zero_()
 
 	# ---- geometry (start_vc in the GUI) -----------------------------
 
@@ -363,7 +378,7 @@ class RealtimeSession:
 
 	# ---- per block -----------------------------------------------------
 
-	def process(self, pcm):
+	def process(self, pcm, warm=False):
 		"""
 		pcm: float32 numpy block of client_block samples at client_sr.
 		Returns a float32 numpy block of the same size.
@@ -375,14 +390,36 @@ class RealtimeSession:
 			block = self.in_res(block, self.block_frame)
 			self._push(block)
 			with self.torch.no_grad():
-				voiced = self.talk and self._voiced(block)
+				voiced = warm or (self.talk and self._voiced(block))
 				out = self._infer() if voiced else self._silence()
 				out = self._sola(out)
 				out = self.out_res(out, self.client_block)
-			self.stats["blocks"] += 1
-			self.stats["infer_ms"] = round(
-				(time.perf_counter() - t0) * 1000, 1)
-			return out.clamp_(-1.0, 1.0).cpu().numpy()
+			result = out.clamp_(-1.0, 1.0).cpu().numpy()
+			self._record_time(t0, voiced)
+			return result
+
+	def _record_time(self, t0, voiced):
+		ms = (time.perf_counter() - t0) * 1000
+		self.stats["blocks"] += 1
+		self.stats["infer_ms"] = round(ms, 1)
+		if voiced:
+			avg = self.stats["avg_ms"]
+			self.stats["avg_ms"] = round(ms if avg == 0 else
+						     0.8 * avg + 0.2 * ms, 1)
+
+	def recommended_block_time(self):
+		"""
+		Block time (s) that would leave ~35 % headroom at the measured
+		average inference time, rounded up to a 20 ms frame; None if
+		the current setting is fine.
+		"""
+		avg = self.stats["avg_ms"]
+		block_ms = 1000.0 * self.block_frame / self.sr
+		if avg == 0 or avg < 0.75 * block_ms:
+			return None
+		want = avg * 1.5 / 1000.0
+		frame = 1.0 / FRAMES_PER_SECOND
+		return round(math.ceil(want / frame) * frame, 2)
 
 	def _voiced(self, block):
 		thr = self.p["threshold_db"]

@@ -826,10 +826,14 @@ const rt = {
 	ptt_down: false,
 	ptt_timer: null,
 	talk: true,
+	skips: 0,
+	retunes: 0,
+	restarting: false,
 };
+const RT_MAX_RETUNES = 3;
 
 const rt_prefs_keys = ["rt-model", "rt-fp16", "rt-gain", "rt-ns", "rt-ec",
-		       "rt-agc", "rt-ptt", "rt-mic", "rt-out"];
+		       "rt-agc", "rt-ptt", "rt-mic", "rt-out", "rt-autotune"];
 
 function rt_save_prefs() {
 	const p = {};
@@ -967,23 +971,78 @@ function rt_set_stats(html, cls) {
 }
 
 function rt_render_stats() {
-	const s = rt.stats;
-	const block_ms = s.block_ms || 0;
-	const infer = s.infer_ms || 0;
-	const slow = block_ms && infer > block_ms * 0.9;
-	const parts = [
-		"block " + block_ms + " ms",
-		"<span class='" + (slow ? "bad" : "") + "'>inference " + infer + " ms</span>",
-		"delay ≈ " + (s.algorithm_latency_ms || 0) + " ms + network",
-		"sent " + rt.sent + " / got " + rt.received,
-	];
-	if (rt.underruns)
-		parts.push("<span class='bad'>underruns " + rt.underruns + "</span>");
-	if (s.gated)
-		parts.push("gated " + s.gated);
-	if (slow)
-		parts.push("<span class='bad'>GPU too slow: raise block time or lower steps</span>");
-	rt_set_stats(parts.join(" · "));
+	const st = rt.stats;
+	const block_ms = st.block_ms || 0;
+	const avg = st.avg_ms || st.infer_ms || 0;
+	const load = block_ms ? avg / block_ms : 0;
+	const table = $("#rt-table");
+	table.hidden = !rt.running;
+	if (!rt.running)
+		return;
+	$("#rt-t-model").textContent = (st.model || "") + (st.fp16 ? " · fp16" : " · fp32");
+	$("#rt-t-block").textContent = block_ms + " ms";
+	const comp = $("#rt-t-compute");
+	comp.textContent = Math.round(avg) + " ms (" + Math.round(load * 100) + "% of block)";
+	comp.className = load > 0.9 ? "err" : load > 0.75 ? "bad" : "ok";
+	const delay = (st.algorithm_latency_ms || 0) + Math.round(avg) + block_ms;
+	$("#rt-t-delay").textContent = "≈ " + delay + " ms";
+	const state = $("#rt-t-state");
+	const dropped = st.dropped || 0;
+	if (load > 0.9 || dropped > 5) {
+		state.textContent = "too slow: " + dropped + " blocks dropped, " +
+			rt.skips + " skips" + (st.recommend_block_time ?
+			", needs block ≥ " + st.recommend_block_time + " s" : "");
+		state.className = "err";
+	} else if (load > 0.75) {
+		state.textContent = "near the limit";
+		state.className = "bad";
+	} else {
+		state.textContent = "keeping up" + (rt.underruns ? " (" + rt.underruns + " audio gaps)" : "");
+		state.className = "ok";
+	}
+	rt_set_stats("");
+	rt_autotune(st, load);
+}
+
+/* ---- automatic adjustment ------------------------------------------- */
+
+async function rt_autotune(st, load) {
+	if (!$("#rt-autotune").checked || rt.restarting || !rt.running)
+		return;
+	if ((st.blocks || 0) < 16 || !st.recommend_block_time)
+		return;
+	if (rt.retunes >= RT_MAX_RETUNES) {
+		rt_set_stats("still too slow after " + RT_MAX_RETUNES +
+			" adjustments: pick the Tiny model or close other GPU programs", "bad");
+		return;
+	}
+	rt.retunes++;
+	rt.restarting = true;
+	let what;
+	if (!$("#rt-fp16").checked) {
+		$("#rt-fp16").checked = true;
+		what = "switched to fp16";
+	} else {
+		const input = $("#rt-params input[name=block_time]");
+		const want = Math.min(parseFloat(input.max), st.recommend_block_time);
+		if (want <= parseFloat(input.value) + 0.001 &&
+		    $("#rt-model").value !== "tiny") {
+			$("#rt-model").value = "tiny";
+			rt_model_hint();
+			what = "switched to the Tiny model";
+		} else {
+			input.value = want;
+			rt_refresh_outputs();
+			rt_persist();
+			what = "block time raised to " + want + " s";
+		}
+	}
+	rt_save_prefs();
+	toast("GPU too slow: " + what + ", restarting…");
+	rt_stop("");
+	await new Promise(r => setTimeout(r, 600));
+	rt.restarting = false;
+	rt_start();
 }
 
 function rt_ws_url(token) {
@@ -1023,7 +1082,9 @@ async function rt_start() {
 		start.voice_id = ref.id;
 	else
 		start.reference_id = ref.id;
-	rt.sent = rt.received = rt.underruns = 0;
+	rt.sent = rt.received = rt.underruns = rt.skips = 0;
+	if (!rt.restarting)
+		rt.retunes = 0;
 	rt.stats = {};
 	const ws = new WebSocket(rt_ws_url(token));
 	ws.binaryType = "arraybuffer";
@@ -1128,9 +1189,11 @@ function rt_go_live(info) {
 	src.connect(rt.capture);
 	rt.player = new AudioWorkletNode(ctx, "rt-player", {
 		numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1],
-		processorOptions: { seconds: 6, prime: rt.block * 2 } });
+		processorOptions: { seconds: 6, prime: rt.block,
+				    max_backlog: rt.block * 3 } });
 	rt.player.port.onmessage = ev => {
 		rt.underruns = ev.data.underruns;
+		rt.skips = ev.data.skips || 0;
 		rt_render_stats();
 	};
 	rt.player.connect(ctx.destination);
@@ -1266,6 +1329,7 @@ function rt_stop(reason) {
 	rt.capture = rt.player = rt.mic = rt.ctx = null;
 	rt.talk = true;
 	rt.ptt_down = false;
+	$("#rt-table").hidden = true;
 	$("#rt-card").classList.remove("live");
 	$("#rt-stop").disabled = true;
 	$("#rt-ptt-btn").disabled = true;
@@ -1292,7 +1356,7 @@ function setup_realtime() {
 	$("#rt-model").addEventListener("change", () => { rt_model_hint(); rt_save_prefs(); });
 	$("#rt-gain").addEventListener("input", () => { rt_apply_gain(); rt_save_prefs(); });
 	rt_apply_gain();
-	for (const id of ["rt-fp16", "rt-ns", "rt-ec", "rt-agc", "rt-mic", "rt-out"])
+	for (const id of ["rt-fp16", "rt-ns", "rt-ec", "rt-agc", "rt-mic", "rt-out", "rt-autotune"])
 		$("#" + id).addEventListener("change", rt_save_prefs);
 	$$("#rt-params input").forEach(i => i.addEventListener("input", () => {
 		rt_refresh_outputs();

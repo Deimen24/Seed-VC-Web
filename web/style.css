@@ -298,3 +298,10 @@ dialog .row { margin: 0.75rem 0; }
 }
 .rt-gain { min-width: 12rem; }
 #rt-ptt-btn.talking { background: var(--ok); border-color: var(--ok); color: #000; }
+
+.rt-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.rt-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 0.2rem 0.5rem 0.2rem 0; white-space: nowrap; }
+.rt-table td { padding: 0.2rem 0.75rem 0.2rem 0; font-variant-numeric: tabular-nums; }
+.rt-table td.ok { color: var(--ok); }
+.rt-table td.bad { color: var(--warn); }
+.rt-table td.err { color: var(--err); }

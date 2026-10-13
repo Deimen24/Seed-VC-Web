@@ -243,12 +243,18 @@ effects; the presets cover the useful range.
 3. Press *Start*. The first start loads the small real-time model
    (about 2 GB download once).
 
-The card shows the block size, inference time per block and the
-algorithmic delay. If inference time approaches the block time the GPU
-cannot keep up: pick *Low latency* with fewer diffusion steps or raise
-*Block time*. *Right context* is look-ahead: more sounds better and adds
-delay one to one. The *Noise gate* mutes blocks below a level so room
-noise is not converted.
+While live, a status table shows the model, the block length, the
+compute time per block as a percentage of the block, the total delay
+and a one-line GPU verdict (*keeping up*, *near the limit*, *too slow*
+with the number of dropped blocks). You do not need to touch any
+parameter: with *Auto-adjust for my GPU* (on by default) the page
+reacts to *too slow* by switching to fp16, then raising the block time
+to what the measured compute time needs, then falling back to the Tiny
+model, restarting the session each time with a toast saying what it
+changed. Turn it off if you prefer to set *Block time* yourself.
+*Right context* is look-ahead: more sounds better and adds delay one to
+one. The *Noise gate* mutes blocks below a level so room noise is not
+converted.
 
 **Push-to-talk**: tick *Push-to-talk*; the microphone is then muted
 until you hold the bound key (default Right Ctrl, click *key:* to bind

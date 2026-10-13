@@ -407,7 +407,7 @@ async def ws_realtime(ws: WebSocket):
 	session = None
 	worker = None
 	queue = asyncio.Queue(maxsize=3)
-	dropped = 0
+	dropped = [0]
 	try:
 		while True:
 			msg = await ws.receive()
@@ -420,7 +420,7 @@ async def ws_realtime(ws: WebSocket):
 					if session is None:
 						break
 					worker = asyncio.create_task(
-						_rt_worker(ws, session, queue))
+						_rt_worker(ws, session, queue, dropped))
 				elif cmd.get("type") == "talk" and session:
 					session.talk = bool(cmd.get("on", True))
 				elif cmd.get("type") == "stop":
@@ -428,10 +428,7 @@ async def ws_realtime(ws: WebSocket):
 			elif msg.get("bytes") is not None and session is not None:
 				if queue.full():
 					queue.get_nowait()
-					dropped += 1
-					if dropped % 10 == 1:
-						await _rt_send(ws, {"type": "warning",
-								    "message": "GPU too slow for this block size; dropped %d blocks" % dropped})
+					dropped[0] += 1
 				queue.put_nowait(msg["bytes"])
 	except WebSocketDisconnect:
 		pass
@@ -497,7 +494,7 @@ async def _rt_start(ws, cmd):
 	return session
 
 
-async def _rt_worker(ws, session, queue):
+async def _rt_worker(ws, session, queue, dropped):
 	import numpy as np
 	n = 0
 	try:
@@ -511,7 +508,10 @@ async def _rt_worker(ws, session, queue):
 			n += 1
 			if n % 8 == 0:
 				await _rt_send(ws, {"type": "stats", **session.stats,
-						    "queued": queue.qsize()})
+						    "queued": queue.qsize(),
+						    "dropped": dropped[0],
+						    "recommend_block_time":
+						    session.recommended_block_time()})
 	except asyncio.CancelledError:
 		raise
 	except Exception as exc:

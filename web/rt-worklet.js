@@ -69,8 +69,10 @@ class RtPlayer extends AudioWorkletProcessor {
 		this.wr = 0;
 		this.avail = 0;
 		this.prime = options.processorOptions.prime || 0;
+		this.max_backlog = options.processorOptions.max_backlog || this.size;
 		this.primed = false;
 		this.underruns = 0;
+		this.skips = 0;
 		this.port.onmessage = ev => this.push(new Float32Array(ev.data));
 	}
 
@@ -82,6 +84,17 @@ class RtPlayer extends AudioWorkletProcessor {
 		this.avail = Math.min(this.avail + data.length, this.size);
 		if (this.avail >= this.prime)
 			this.primed = true;
+		/*
+		 * If the server delivered a burst after falling behind, the
+		 * backlog would stay as permanent delay.  Skip ahead instead.
+		 */
+		if (this.avail > this.max_backlog) {
+			const drop = this.avail - this.prime;
+			this.rd = (this.rd + drop) % this.size;
+			this.avail -= drop;
+			this.skips++;
+			this.port.postMessage({ underruns: this.underruns, skips: this.skips });
+		}
 	}
 
 	process(inputs, outputs) {
@@ -93,7 +106,7 @@ class RtPlayer extends AudioWorkletProcessor {
 			if (this.primed) {
 				this.underruns++;
 				this.primed = false;
-				this.port.postMessage({ underruns: this.underruns });
+				this.port.postMessage({ underruns: this.underruns, skips: this.skips });
 			}
 			return true;
 		}

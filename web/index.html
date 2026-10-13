@@ -191,8 +191,14 @@
 				<button class="btn primary" id="rt-start" disabled>▶ Start</button>
 				<button class="btn" id="rt-stop" disabled>■ Stop</button>
 				<label class="field check"><input type="checkbox" id="rt-monitor" checked><span>Play converted voice here</span></label>
+				<label class="field check" title="If the GPU cannot keep up, switch to fp16 and raise the block time automatically"><input type="checkbox" id="rt-autotune" checked><span>Auto-adjust for my GPU</span></label>
 			</div>
 			<div class="rt-stats" id="rt-stats"></div>
+			<table class="rt-table" id="rt-table" hidden>
+				<tr><th>Model</th><td id="rt-t-model"></td><th>Compute per block</th><td id="rt-t-compute"></td></tr>
+				<tr><th>Block</th><td id="rt-t-block"></td><th>Total delay</th><td id="rt-t-delay"></td></tr>
+				<tr><th>GPU state</th><td id="rt-t-state" colspan="3"></td></tr>
+			</table>
 		</div>
 	</section>
 

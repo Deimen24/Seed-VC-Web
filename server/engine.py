@@ -83,12 +83,33 @@ def _pick_device(torch):
 	want = settings.DEVICE
 	if want == "auto":
 		if torch.cuda.is_available():
-			return torch.device("cuda")
-		mps = getattr(torch.backends, "mps", None)
-		if mps is not None and mps.is_available():
-			return torch.device("mps")
-		return torch.device("cpu")
-	return torch.device(want)
+			dev = torch.device("cuda")
+		else:
+			mps = getattr(torch.backends, "mps", None)
+			if mps is not None and mps.is_available():
+				dev = torch.device("mps")
+			else:
+				dev = torch.device("cpu")
+	else:
+		dev = torch.device(want)
+	if dev.type == "cuda":
+		_tune_cuda(torch)
+	return dev
+
+
+def _tune_cuda(torch):
+	"""
+	TF32 makes fp32 matmuls/convs several times faster on Ampere and
+	newer with no audible difference; cudnn.benchmark picks the fastest
+	conv kernels for the fixed block shapes used in real time.
+	"""
+	torch.backends.cuda.matmul.allow_tf32 = True
+	torch.backends.cudnn.allow_tf32 = True
+	torch.backends.cudnn.benchmark = True
+	try:
+		torch.set_float32_matmul_precision("high")
+	except Exception:
+		pass
 
 
 def _configure_pydub():
