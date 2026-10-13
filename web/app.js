@@ -1084,7 +1084,9 @@ async function rt_start() {
 	try {
 		await rt_open_audio();
 	} catch (e) {
-		rt_set_stats("microphone error: " + e.message, "err");
+		rt_set_stats(mic_error_text(e), "err");
+		$("#rt-mic-state").textContent = mic_error_text(e);
+		$("#rt-mic-state").className = "muted err-text";
 		$("#rt-start").disabled = false;
 		return;
 	}
@@ -1221,6 +1223,63 @@ function rt_go_live(info) {
 	$("#rt-ptt-btn").disabled = !$("#rt-ptt").checked;
 	rt_set_talk(!$("#rt-ptt").checked);
 	rt_render_stats();
+}
+
+/* ---- microphone permission ------------------------------------------- */
+
+function mic_error_text(e) {
+	const name = e && e.name ? e.name : "";
+	if (!window.isSecureContext || !navigator.mediaDevices)
+		return "Not possible on http://" + location.host + ": browsers " +
+			"allow the microphone only on HTTPS or localhost. Open the " +
+			"page via your HTTPS address.";
+	if (name === "NotAllowedError" || name === "SecurityError")
+		return "The browser blocked the microphone for this site. Click " +
+			"the lock/tune icon left of the address bar → Site settings " +
+			"→ Microphone → Allow, then reload.";
+	if (name === "NotFoundError" || name === "DevicesNotFoundError")
+		return "No microphone found. Plug one in or check the OS sound " +
+			"settings, then click again.";
+	if (name === "NotReadableError")
+		return "The microphone is in use by another program (or blocked " +
+			"by the OS privacy settings).";
+	return "Microphone error: " + (e && e.message ? e.message : name);
+}
+
+async function rt_allow_mic() {
+	const state_el = $("#rt-mic-state");
+	state_el.textContent = "asking the browser…";
+	let stream;
+	try {
+		stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+	} catch (e) {
+		state_el.textContent = mic_error_text(e);
+		state_el.className = "muted err-text";
+		return false;
+	}
+	const label = stream.getAudioTracks()[0].label || "microphone";
+	stream.getTracks().forEach(t => t.stop());
+	await rt_list_devices();
+	state_el.textContent = "microphone allowed: " + label;
+	state_el.className = "muted ok-text";
+	$("#rt-allow-mic").textContent = "🎤 Microphone allowed";
+	rt_update_button();
+	return true;
+}
+
+async function rt_check_mic_permission() {
+	if (!navigator.permissions || !navigator.permissions.query)
+		return;
+	try {
+		const st = await navigator.permissions.query({ name: "microphone" });
+		if (st.state === "granted")
+			rt_allow_mic();
+		else if (st.state === "denied")
+			$("#rt-mic-state").textContent = mic_error_text({ name: "NotAllowedError" });
+		st.onchange = () => rt_check_mic_permission();
+	} catch (e) {
+		/* permission query unsupported (Firefox): the button still works */
+	}
 }
 
 /* ---- input level / gain ------------------------------------------------ */
@@ -1407,6 +1466,14 @@ function setup_realtime() {
 	$("#rt-stop").addEventListener("click", () => rt_stop(""));
 	rt_update_button();
 	rt_list_devices();
+	$("#rt-allow-mic").addEventListener("click", rt_allow_mic);
+	if (!window.isSecureContext || !navigator.mediaDevices) {
+		$("#rt-allow-mic").disabled = true;
+		$("#rt-mic-state").textContent = mic_error_text(null);
+		$("#rt-mic-state").className = "muted err-text";
+	} else {
+		rt_check_mic_permission();
+	}
 	if (navigator.mediaDevices)
 		navigator.mediaDevices.addEventListener("devicechange", rt_list_devices);
 	window.addEventListener("beforeunload", () => rt_stop(""));

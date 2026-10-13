@@ -305,3 +305,6 @@ dialog .row { margin: 0.75rem 0; }
 .rt-table td.ok { color: var(--ok); }
 .rt-table td.bad { color: var(--warn); }
 .rt-table td.err { color: var(--err); }
+
+.err-text { color: var(--err) !important; }
+.ok-text { color: var(--ok) !important; }

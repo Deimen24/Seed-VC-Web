@@ -239,11 +239,16 @@ effects; the presets cover the useful range.
 ### Real-time voice changer
 
 1. Pick a reference voice (upload, library or example).
-2. In the *Real-time voice changer* card choose your microphone and, if
+2. In the *Real-time voice changer* card click **Allow microphone**;
+   the browser then asks for permission (it only does this on HTTPS or
+   localhost). The line next to the button says whether it worked and,
+   if not, why: blocked in the browser's site settings, no device, or
+   a plain-HTTP address.
+3. Choose your microphone and, if
    you want the converted voice to go into a game or call, a **virtual
    audio cable** (e.g. VB-Cable) as output. Put on headphones.
-3. Press *Start*. The first start loads the small real-time model
-   (about 2 GB download once).
+4. Press *Start*. The first start loads the real-time model (about
+   2 GB download once).
 
 While live, a status table shows the model, the block length, the
 compute time per block as a percentage of the block, the total delay
