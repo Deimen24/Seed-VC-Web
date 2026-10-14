@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Plachataa Web installer for Windows 10/11 with an NVIDIA RTX GPU.
+Seed-VC-Web installer for Windows 10/11 with an NVIDIA RTX GPU.
 
 .DESCRIPTION
 Idempotent: re-run any time.  Installs Python 3.10 and Git through
@@ -236,7 +236,7 @@ function Write-Env {
 	if (Test-Path $envfile) { return }
 	Log "Creating .env"
 	Copy-Item (Join-Path $Root ".env.example") $envfile
-	Add-Content $envfile "`nPLACHATAA_FORWARDED_ALLOW_IPS=$ProxyIp"
+	Add-Content $envfile "`nSEEDVC_WEB_FORWARDED_ALLOW_IPS=$ProxyIp"
 }
 
 function Main {

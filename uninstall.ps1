@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Remove Plachataa Web from this PC.
+Remove Seed-VC-Web from this PC.
 
 .DESCRIPTION
 Removes the startup task and firewall rule, the Python environment
@@ -31,9 +31,10 @@ function Confirm-Step($question) {
 }
 
 function Remove-Service {
-	$t = Get-ScheduledTask -TaskName "PlachataaWeb" -ErrorAction SilentlyContinue
-	$r = Get-NetFirewallRule -DisplayName "Plachataa Web" -ErrorAction SilentlyContinue
-	if ($t -or $r) {
+	$t = Get-ScheduledTask -TaskName "SeedVCWeb" -ErrorAction SilentlyContinue
+	$t2 = Get-ScheduledTask -TaskName "PlachataaWeb" -ErrorAction SilentlyContinue
+	$r = Get-NetFirewallRule -DisplayName "Seed-VC-Web" -ErrorAction SilentlyContinue
+	if ($t -or $t2 -or $r) {
 		& (Join-Path $Root "service.ps1") uninstall
 	}
 }
@@ -77,7 +78,7 @@ function Remove-Self {
 	Start-Process cmd -ArgumentList "/c", "timeout /t 3 /nobreak >nul & rmdir /s /q `"$Root`"" -WindowStyle Hidden
 }
 
-Log "Uninstalling Plachataa Web from $Root"
+Log "Uninstalling Seed-VC-Web from $Root"
 Remove-Service
 Stop-Running
 Remove-Sub ".venv"

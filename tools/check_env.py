@@ -155,7 +155,7 @@ def build_report(args):
 
 
 def print_human(rep):
-	print("Plachataa Web environment check")
+	print("Seed-VC-Web environment check")
 	print("  OS:      %s" % rep["system"])
 	print("  Python:  %s%s" % (rep["python"],
 				  "" if rep["python_ok"] else

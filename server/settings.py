@@ -8,19 +8,19 @@ seed-vc checkout before importing it.
 
 Environment variables override the defaults:
 
-  PLACHATAA_SEEDVC_DIR   path to the seed-vc checkout
-  PLACHATAA_DATA_DIR     uploads, outputs, voices, job history
-  PLACHATAA_HOST         bind address (default 127.0.0.1)
-  PLACHATAA_PORT         bind port (default 7870)
-  PLACHATAA_DEVICE       cuda | cpu | mps (default: auto)
-  PLACHATAA_MAX_UPLOAD_MB   upload size limit (default 200)
-  PLACHATAA_ROOT_PATH    URL prefix when served under a sub-path by a
+  SEEDVC_WEB_SEEDVC_DIR   path to the seed-vc checkout
+  SEEDVC_WEB_DATA_DIR     uploads, outputs, voices, job history
+  SEEDVC_WEB_HOST         bind address (default 127.0.0.1)
+  SEEDVC_WEB_PORT         bind port (default 7870)
+  SEEDVC_WEB_DEVICE       cuda | cpu | mps (default: auto)
+  SEEDVC_WEB_MAX_UPLOAD_MB   upload size limit (default 200)
+  SEEDVC_WEB_ROOT_PATH    URL prefix when served under a sub-path by a
                          reverse proxy, e.g. /voice (default: none)
-  PLACHATAA_FORWARDED_ALLOW_IPS  proxies whose X-Forwarded-* headers are
+  SEEDVC_WEB_FORWARDED_ALLOW_IPS  proxies whose X-Forwarded-* headers are
                          trusted (default 127.0.0.1; "*" for any)
-  PLACHATAA_BASIC_AUTH   user:password to require HTTP basic auth
+  SEEDVC_WEB_BASIC_AUTH   user:password to require HTTP basic auth
                          (default: none; let the proxy authenticate)
-  PLACHATAA_LOG_FILE     also write logs to this file (rotated)
+  SEEDVC_WEB_LOG_FILE     also write logs to this file (rotated)
   HF_HOME                HuggingFace cache; defaults to DATA_DIR/hf_cache
 
 A .env file in the repository root is loaded first, so the service unit
@@ -38,9 +38,16 @@ try:
 except ImportError:
 	pass
 
-SEEDVC_DIR = Path(os.environ.get("PLACHATAA_SEEDVC_DIR",
+# The project was called "Plachataa Web" before; keep old .env files and
+# service units working by mapping their variables to the new names.
+for _key in list(os.environ):
+	if _key.startswith("PLACHATAA_"):
+		os.environ.setdefault("SEEDVC_WEB_" + _key[len("PLACHATAA_"):],
+				      os.environ[_key])
+
+SEEDVC_DIR = Path(os.environ.get("SEEDVC_WEB_SEEDVC_DIR",
 			      ROOT_DIR / "vendor" / "seed-vc")).resolve()
-DATA_DIR = Path(os.environ.get("PLACHATAA_DATA_DIR",
+DATA_DIR = Path(os.environ.get("SEEDVC_WEB_DATA_DIR",
 			    ROOT_DIR / "data")).resolve()
 WEB_DIR = ROOT_DIR / "web"
 
@@ -50,16 +57,16 @@ VOICE_DIR = DATA_DIR / "voices"
 JOBS_FILE = DATA_DIR / "jobs.json"
 VOICES_FILE = DATA_DIR / "voices.json"
 
-HOST = os.environ.get("PLACHATAA_HOST", "127.0.0.1")
-PORT = int(os.environ.get("PLACHATAA_PORT", "7870"))
-DEVICE = os.environ.get("PLACHATAA_DEVICE", "auto")
-MAX_UPLOAD_BYTES = int(os.environ.get("PLACHATAA_MAX_UPLOAD_MB", "200")) \
+HOST = os.environ.get("SEEDVC_WEB_HOST", "127.0.0.1")
+PORT = int(os.environ.get("SEEDVC_WEB_PORT", "7870"))
+DEVICE = os.environ.get("SEEDVC_WEB_DEVICE", "auto")
+MAX_UPLOAD_BYTES = int(os.environ.get("SEEDVC_WEB_MAX_UPLOAD_MB", "200")) \
 	* 1024 * 1024
-ROOT_PATH = os.environ.get("PLACHATAA_ROOT_PATH", "").rstrip("/")
-FORWARDED_ALLOW_IPS = os.environ.get("PLACHATAA_FORWARDED_ALLOW_IPS",
+ROOT_PATH = os.environ.get("SEEDVC_WEB_ROOT_PATH", "").rstrip("/")
+FORWARDED_ALLOW_IPS = os.environ.get("SEEDVC_WEB_FORWARDED_ALLOW_IPS",
 				     "127.0.0.1")
-BASIC_AUTH = os.environ.get("PLACHATAA_BASIC_AUTH", "")
-LOG_FILE = os.environ.get("PLACHATAA_LOG_FILE", "")
+BASIC_AUTH = os.environ.get("SEEDVC_WEB_BASIC_AUTH", "")
+LOG_FILE = os.environ.get("SEEDVC_WEB_LOG_FILE", "")
 LOG_DIR = DATA_DIR / "logs"
 
 # Reference audio longer than this is clipped by seed-vc itself.

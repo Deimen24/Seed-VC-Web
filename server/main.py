@@ -30,7 +30,7 @@ from .realtime import DEFAULT_PARAMS as RT_DEFAULTS, PARAM_LIMITS as RT_LIMITS, 
 from .jobs import JobStore
 from .library import make_libraries
 
-log = logging.getLogger("plachataa")
+log = logging.getLogger("seedvcweb")
 
 settings.apply_environment()
 settings.ensure_dirs()
@@ -38,7 +38,7 @@ ensure_ffmpeg_on_path()
 
 # ROOT_PATH is given to uvicorn (not FastAPI): uvicorn then rewrites the
 # stripped path the reverse proxy sends, and routing stays consistent.
-app = FastAPI(title="Plachataa Web", docs_url="/api/docs", redoc_url=None)
+app = FastAPI(title="Seed-VC-Web", docs_url="/api/docs", redoc_url=None)
 uploads, voices = make_libraries()
 jobs = JobStore()
 
@@ -138,7 +138,7 @@ async def basic_auth(request: Request, call_next):
 		if not _auth_ok(request.headers.get("authorization")):
 			return Response("authentication required", status_code=401,
 					headers={"WWW-Authenticate":
-						 'Basic realm="Plachataa Web"'})
+						 'Basic realm="Seed-VC-Web"'})
 	response = await call_next(request)
 	# The UI files change with every update; make browsers revalidate
 	# them (ETag keeps that cheap) instead of serving stale scripts.
@@ -573,7 +573,7 @@ def engine_error(_request, exc):
 # ---- entry point -------------------------------------------------------
 
 def parse_args():
-	p = argparse.ArgumentParser(description="Plachataa Web server")
+	p = argparse.ArgumentParser(description="Seed-VC-Web server")
 	p.add_argument("--host", default=settings.HOST)
 	p.add_argument("--port", type=int, default=settings.PORT)
 	p.add_argument("--listen", action="store_true",

@@ -20,7 +20,7 @@ import logging
 
 from . import settings
 
-log = logging.getLogger("plachataa.engine")
+log = logging.getLogger("seedvcweb.engine")
 
 MODEL_V1 = "v1"
 MODEL_V1_F0 = "v1_f0"

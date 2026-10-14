@@ -37,7 +37,7 @@ def ensure_ffmpeg_on_path():
 	exe = ffmpeg_path()
 	if exe is None:
 		return False
-	link_dir = Path(exe).parent / "plachataa-bin"
+	link_dir = Path(exe).parent / "seed-vc-web-bin"
 	link_dir.mkdir(exist_ok=True)
 	suffix = ".exe" if os.name == "nt" else ""
 	alias = link_dir / ("ffmpeg" + suffix)

@@ -1,4 +1,4 @@
-# Plachataa Web
+# Seed-VC-Web
 
 A self-hosted web interface for [Seed-VC](https://github.com/Plachtaa/seed-vc),
 the zero-shot voice and singing-voice conversion model, built for a
@@ -81,8 +81,8 @@ install.bat -Yes               never prompt
 ### Linux
 
 ```bash
-git clone https://github.com/Deimen24/Plachataa_Web.git
-cd Plachataa_Web
+git clone https://github.com/Deimen24/Seed-VC-Web.git
+cd Seed-VC-Web
 ./install.sh                 # add --download-models, --update-driver,
                              #     --proxy-ip IP, --no-service, --cpu, --yes
 ```
@@ -131,10 +131,23 @@ Options are passed straight through:
 ./run.sh --listen          # reachable from your phone / other PCs on the LAN
 ./run.sh --port 8000
 ./run.sh --preload v1      # load the v1 models at start
-PLACHATAA_NO_BROWSER=1 ./run.sh
+SEEDVC_WEB_NO_BROWSER=1 ./run.sh
 ```
 
 Stop with Ctrl+C.
+
+## Renamed from "Plachataa Web"
+
+Existing installs keep working: `PLACHATAA_*` variables in `.env` are
+still read, and `service.sh install` / `service.bat install` replace the
+old `plachataa-web` service or `PlachataaWeb` task with the new name.
+To finish the rename on your PC:
+
+```bash
+git remote set-url origin https://github.com/Deimen24/Seed-VC-Web.git
+cd .. && mv Plachataa_Web Seed-VC-Web && cd Seed-VC-Web
+./service.sh install      # re-registers the service with the new path and name
+```
 
 ## Update
 
@@ -195,17 +208,17 @@ What the proxy needs:
 
 - **WebSocket upgrade** on `/ws/realtime` (real-time mode).
 - **Body size** of at least 200 MB (`client_max_body_size` in nginx),
-  matching `PLACHATAA_MAX_UPLOAD_MB`.
+  matching `SEEDVC_WEB_MAX_UPLOAD_MB`.
 - **HTTPS**. Browsers only give microphone access to secure origins,
   so real-time mode needs TLS at the proxy (or `localhost`).
-- **Sub-path**: set `PLACHATAA_ROOT_PATH=/voice` in `.env` and make the
+- **Sub-path**: set `SEEDVC_WEB_ROOT_PATH=/voice` in `.env` and make the
   proxy strip the prefix (see the sample configs).
 
 Settings in `.env` on the gaming PC:
 
-- `PLACHATAA_FORWARDED_ALLOW_IPS`: the proxy's IP, so the client IP and
+- `SEEDVC_WEB_FORWARDED_ALLOW_IPS`: the proxy's IP, so the client IP and
   scheme in the logs are right (`*` trusts any proxy).
-- `PLACHATAA_BASIC_AUTH=user:password`: enable if the proxy does not
+- `SEEDVC_WEB_BASIC_AUTH=user:password`: enable if the proxy does not
   authenticate. Real-time mode fetches a short-lived token for its
   WebSocket, so it works behind basic auth too.
 - `/api/health` answers without authentication for uptime checks.
@@ -311,16 +324,16 @@ Copy `.env.example` to `.env` and uncomment what you need:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `PLACHATAA_PORT` | `7870` | HTTP port |
-| `PLACHATAA_HOST` | `127.0.0.1` | bind address (`run --listen` uses 0.0.0.0) |
-| `PLACHATAA_DEVICE` | `auto` | `cuda`, `cpu` or `mps` |
-| `PLACHATAA_DATA_DIR` | `./data` | uploads, outputs, voices, HuggingFace cache |
-| `PLACHATAA_SEEDVC_DIR` | `./vendor/seed-vc` | upstream checkout |
-| `PLACHATAA_MAX_UPLOAD_MB` | `200` | upload size limit |
-| `PLACHATAA_ROOT_PATH` | unset | URL prefix when proxied under a sub-path |
-| `PLACHATAA_FORWARDED_ALLOW_IPS` | `127.0.0.1` | proxies whose forwarded headers are trusted |
-| `PLACHATAA_BASIC_AUTH` | unset | `user:password` to require HTTP basic auth |
-| `PLACHATAA_LOG_FILE` | unset | rotating log file (the service sets `data/logs/server.log`) |
+| `SEEDVC_WEB_PORT` | `7870` | HTTP port |
+| `SEEDVC_WEB_HOST` | `127.0.0.1` | bind address (`run --listen` uses 0.0.0.0) |
+| `SEEDVC_WEB_DEVICE` | `auto` | `cuda`, `cpu` or `mps` |
+| `SEEDVC_WEB_DATA_DIR` | `./data` | uploads, outputs, voices, HuggingFace cache |
+| `SEEDVC_WEB_SEEDVC_DIR` | `./vendor/seed-vc` | upstream checkout |
+| `SEEDVC_WEB_MAX_UPLOAD_MB` | `200` | upload size limit |
+| `SEEDVC_WEB_ROOT_PATH` | unset | URL prefix when proxied under a sub-path |
+| `SEEDVC_WEB_FORWARDED_ALLOW_IPS` | `127.0.0.1` | proxies whose forwarded headers are trusted |
+| `SEEDVC_WEB_BASIC_AUTH` | unset | `user:password` to require HTTP basic auth |
+| `SEEDVC_WEB_LOG_FILE` | unset | rotating log file (the service sets `data/logs/server.log`) |
 | `HF_ENDPOINT` | unset | e.g. `https://hf-mirror.com` if huggingface.co is blocked |
 
 ## HTTP API
@@ -355,7 +368,7 @@ The UI talks to a small JSON API (interactive docs at `/api/docs`):
   fast. Pre-download with `install.bat -DownloadModels`.
 - **HuggingFace unreachable**: set `HF_ENDPOINT=https://hf-mirror.com`
   in `.env`.
-- **Port in use**: set `PLACHATAA_PORT` in `.env` and restart the service.
+- **Port in use**: set `SEEDVC_WEB_PORT` in `.env` and restart the service.
 - **Real-time stops with close code 1006 right after Start**: the
   reverse proxy is not forwarding WebSockets. In Nginx Proxy Manager
   enable *Websockets Support* on the proxy host; in plain nginx add the

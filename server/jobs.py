@@ -15,7 +15,7 @@ from . import settings
 from .audio import write_wav, dump_json, load_json
 from .engine import engine, Cancelled, MODEL_INFO
 
-log = logging.getLogger("plachataa.jobs")
+log = logging.getLogger("seedvcweb.jobs")
 
 QUEUED = "queued"
 RUNNING = "running"

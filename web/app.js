@@ -1,5 +1,5 @@
 /*
- * Plachataa Web front-end.  Plain JavaScript, no build step.
+ * Seed-VC-Web front-end.  Plain JavaScript, no build step.
  *
  * State lives in one object; every render_* function repaints from it.
  * The server is polled: /api/status every 5 s, /api/jobs every 1.5 s

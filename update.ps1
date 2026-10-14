@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Update Plachataa Web: pull this repo, move seed-vc to the pinned
+Update Seed-VC-Web: pull this repo, move seed-vc to the pinned
 revision, upgrade Python dependencies and re-check the NVIDIA driver.
 
 .PARAMETER UpdateDriver
@@ -38,7 +38,7 @@ function Update-Repo {
 		Warn "not a git checkout; skipping self-update"
 		return
 	}
-	Log "Updating Plachataa Web"
+	Log "Updating Seed-VC-Web"
 	$branch = (git rev-parse --abbrev-ref HEAD).Trim()
 	git diff --quiet
 	if ($LASTEXITCODE -ne 0) {
@@ -91,7 +91,7 @@ if ($LASTEXITCODE -ne 0 -or $UpdateDriver) {
 	exit $LASTEXITCODE
 }
 if ($DownloadModels) { & $Vpy tools\download_models.py }
-if (Get-ScheduledTask -TaskName "PlachataaWeb" -ErrorAction SilentlyContinue) {
+if (Get-ScheduledTask -TaskName "SeedVCWeb" -ErrorAction SilentlyContinue) {
 	Log "Restarting service"
 	& (Join-Path $Root "service.ps1") restart
 }

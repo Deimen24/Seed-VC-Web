@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Update Plachataa Web in place:
+# Update Seed-VC-Web in place:
 #   * pull the latest version of this repository
 #   * move the vendored seed-vc to the revision pinned in seedvc.lock
 #   * upgrade Python dependencies
@@ -38,7 +38,7 @@ done
 
 update_repo() {
 	if [ -d "$ROOT/.git" ]; then
-		log "Updating Plachataa Web"
+		log "Updating Seed-VC-Web"
 		local branch
 		branch="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
 		if ! git -C "$ROOT" diff --quiet; then
@@ -98,7 +98,7 @@ main() {
 }
 
 restart_service() {
-	if [ -f /etc/systemd/system/plachataa-web.service ]; then
+	if [ -f /etc/systemd/system/seed-vc-web.service ]; then
 		log "Restarting service"
 		./service.sh restart
 	fi

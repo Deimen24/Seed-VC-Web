@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-Start the Plachataa Web server and open the browser.
+Start the Seed-VC-Web server and open the browser.
 
   .\run.ps1                 http://localhost:7870
   .\run.ps1 --listen        reachable from other devices on the LAN
   .\run.ps1 --port 8000
   .\run.ps1 --preload v1    load a model family at start
-Set PLACHATAA_NO_BROWSER=1 to keep the browser closed.
+Set SEEDVC_WEB_NO_BROWSER=1 to keep the browser closed.
 #>
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Root
@@ -24,7 +24,7 @@ if (Test-Path $envfile) {
 }
 
 $open = @("--open")
-if ($env:PLACHATAA_NO_BROWSER -and $env:PLACHATAA_NO_BROWSER -ne "0") { $open = @() }
+if ($env:SEEDVC_WEB_NO_BROWSER -and $env:SEEDVC_WEB_NO_BROWSER -ne "0") { $open = @() }
 
 & $Vpy -m server.main @open @args
 exit $LASTEXITCODE

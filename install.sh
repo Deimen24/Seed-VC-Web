@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Plachataa Web installer for Linux (Debian/Ubuntu, Fedora, Arch; others
+# Seed-VC-Web installer for Linux (Debian/Ubuntu, Fedora, Arch; others
 # work if python3.10/3.11, git and a C compiler-free wheel set are
 # available).  Idempotent: re-run it any time.
 #
@@ -336,7 +336,7 @@ write_env() {
 	[ -f "$ROOT/.env" ] && return 0
 	log "Creating .env"
 	cp "$ROOT/.env.example" "$ROOT/.env"
-	printf '\nPLACHATAA_FORWARDED_ALLOW_IPS=%s\n' "$PROXY_IP" >> "$ROOT/.env"
+	printf '\nSEEDVC_WEB_FORWARDED_ALLOW_IPS=%s\n' "$PROXY_IP" >> "$ROOT/.env"
 }
 
 install_service() {

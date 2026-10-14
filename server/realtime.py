@@ -21,7 +21,7 @@ import numpy as np
 
 from . import settings
 
-log = logging.getLogger("plachataa.realtime")
+log = logging.getLogger("seedvcweb.realtime")
 
 FRAMES_PER_SECOND = 50		# content-encoder frame rate (20 ms)
 SAMPLES_16K_PER_FRAME = 320

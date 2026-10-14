@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Manage the Plachataa Web startup task on Windows.
+Manage the Seed-VC-Web startup task on Windows.
 
 .DESCRIPTION
 Registers a Scheduled Task that starts the server at boot (before any
@@ -20,8 +20,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$TaskName = "PlachataaWeb"
-$RuleName = "Plachataa Web"
+$TaskName = "SeedVCWeb"
+$RuleName = "Seed-VC-Web"
+$LegacyTask = "PlachataaWeb"
+$LegacyRule = "Plachataa Web"
 $Vpy = Join-Path $Root ".venv\Scripts\python.exe"
 $LogFile = Join-Path $Root "data\logs\server.log"
 
@@ -46,7 +48,7 @@ function Ensure-Admin {
 function Get-Port {
 	$envfile = Join-Path $Root ".env"
 	if (Test-Path $envfile) {
-		$m = Get-Content $envfile | Select-String '^PLACHATAA_PORT=(\d+)' | Select-Object -Last 1
+		$m = Get-Content $envfile | Select-String '^SEEDVC_WEB_PORT=(\d+)' | Select-Object -Last 1
 		if ($m) { return [int]$m.Matches[0].Groups[1].Value }
 	}
 	return 7870
@@ -60,8 +62,19 @@ function Ensure-EnvFile {
 	}
 }
 
+function Remove-Legacy {
+	$t = Get-ScheduledTask -TaskName $LegacyTask -ErrorAction SilentlyContinue
+	if ($t) {
+		Log "Removing old task $LegacyTask (project renamed)"
+		Stop-ScheduledTask -TaskName $LegacyTask -ErrorAction SilentlyContinue
+		Unregister-ScheduledTask -TaskName $LegacyTask -Confirm:$false
+	}
+	Get-NetFirewallRule -DisplayName $LegacyRule -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+}
+
 function Install-Task {
 	if (-not (Test-Path $Vpy)) { Die "no .venv; run install.bat first" }
+	Remove-Legacy
 	Ensure-EnvFile
 	New-Item -ItemType Directory -Force (Split-Path $LogFile) | Out-Null
 	Log "Registering scheduled task $TaskName (at startup, as SYSTEM)"
@@ -89,6 +102,7 @@ function Install-Task {
 }
 
 function Uninstall-Task {
+	Remove-Legacy
 	$t = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 	if ($t) {
 		Log "Removing scheduled task $TaskName"

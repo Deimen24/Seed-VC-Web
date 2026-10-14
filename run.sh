@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# Start the Plachataa Web server.
+# Start the Seed-VC-Web server.
 #
 #   ./run.sh                 http://localhost:7870, opens your browser
 #   ./run.sh --listen        also reachable from other devices on the LAN
 #   ./run.sh --port 8000
 #   ./run.sh --preload v1    load a model family at start
-#   PLACHATAA_NO_BROWSER=1 ./run.sh   do not open a browser
+#   SEEDVC_WEB_NO_BROWSER=1 ./run.sh   do not open a browser
 #
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,6 +18,6 @@ export PYTHONUNBUFFERED=1
 [ -f "$ROOT/.env" ] && set -a && . "$ROOT/.env" && set +a
 
 open_flag="--open"
-[ "${PLACHATAA_NO_BROWSER:-0}" != 0 ] && open_flag=""
+[ "${SEEDVC_WEB_NO_BROWSER:-0}" != 0 ] && open_flag=""
 
 exec "$ROOT/.venv/bin/python" -m server.main $open_flag "$@"

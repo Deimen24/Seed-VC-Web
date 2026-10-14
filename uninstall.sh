@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Remove Plachataa Web from this machine.
+# Remove Seed-VC-Web from this machine.
 #
 #   ./uninstall.sh              remove service, venv, seed-vc; ask about data/
 #   ./uninstall.sh --keep-data  keep data/ (voices, outputs, model cache)
@@ -46,7 +46,8 @@ stop_running() {
 }
 
 remove_service() {
-	if [ -f /etc/systemd/system/plachataa-web.service ]; then
+	if [ -f /etc/systemd/system/seed-vc-web.service ] || \
+	   [ -f /etc/systemd/system/plachataa-web.service ]; then
 		./service.sh uninstall
 	fi
 }
@@ -89,7 +90,7 @@ remove_self() {
 }
 
 main() {
-	log "Uninstalling Plachataa Web from $ROOT"
+	log "Uninstalling Seed-VC-Web from $ROOT"
 	remove_service
 	stop_running
 	remove_dir .venv

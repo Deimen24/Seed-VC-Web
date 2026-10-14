@@ -1,6 +1,6 @@
 # Architecture
 
-Plachataa Web is a thin, local-only web layer over the unmodified
+Seed-VC-Web is a thin, local-only web layer over the unmodified
 [Seed-VC](https://github.com/Plachtaa/seed-vc) inference code. Nothing
 in `vendor/seed-vc` is patched; the wrapper adapts to it.
 
@@ -141,9 +141,9 @@ the service, the run scripts and the tools all see the same values.
 
 Reverse-proxy support: every URL the server hands to the page is
 relative (`files/...`, `api/...`), so the UI works under any prefix;
-`PLACHATAA_ROOT_PATH` is passed to uvicorn (not FastAPI) so the
+`SEEDVC_WEB_ROOT_PATH` is passed to uvicorn (not FastAPI) so the
 stripped path the proxy forwards is rewritten before routing;
-`proxy_headers` plus `PLACHATAA_FORWARDED_ALLOW_IPS` control which
+`proxy_headers` plus `SEEDVC_WEB_FORWARDED_ALLOW_IPS` control which
 `X-Forwarded-*` headers are trusted; a middleware enforces optional
 HTTP basic auth on everything except `/api/health`.
 
@@ -180,7 +180,7 @@ active. Parameters are persisted per model in `localStorage`.
   (environment check fails) or when a driver/torch change is
   requested; otherwise it only pulls, re-pins, upgrades pip packages
   and restarts the service.
-- `service.sh` writes `/etc/systemd/system/plachataa-web.service`
+- `service.sh` writes `/etc/systemd/system/seed-vc-web.service`
   running as the installing user with `--listen --log-file`,
   `Restart=on-failure` and a long start timeout for model loading, and
   opens the port in ufw or firewalld. `service.ps1` registers a

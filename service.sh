@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Manage the Plachataa Web systemd service (starts at boot, restarts on
+# Manage the Seed-VC-Web systemd service (starts at boot, restarts on
 # failure, listens on all interfaces for a reverse proxy on another
 # machine, opens the port in ufw/firewalld when present).
 #
@@ -11,8 +11,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NAME="plachataa-web"
+NAME="seed-vc-web"
 UNIT="/etc/systemd/system/${NAME}.service"
+LEGACY_UNIT="/etc/systemd/system/plachataa-web.service"
 RUN_USER="${SUDO_USER:-$(id -un)}"
 
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*" >&2; }
@@ -26,7 +27,7 @@ need_systemd() {
 
 port_from_env() {
 	local port=""
-	[ -f "$ROOT/.env" ] && port="$(sed -n 's/^PLACHATAA_PORT=\([0-9]*\).*/\1/p' "$ROOT/.env" | tail -1)"
+	[ -f "$ROOT/.env" ] && port="$(sed -n 's/^SEEDVC_WEB_PORT=\([0-9]*\).*/\1/p' "$ROOT/.env" | tail -1)"
 	echo "${port:-7870}"
 }
 
@@ -63,7 +64,7 @@ write_unit() {
 	log "Writing $UNIT (runs as $RUN_USER)"
 	sudo tee "$UNIT" >/dev/null <<UNIT_EOF
 [Unit]
-Description=Plachataa Web - Seed-VC voice conversion
+Description=Seed-VC-Web - Seed-VC voice conversion
 After=network-online.target
 Wants=network-online.target
 
@@ -85,9 +86,19 @@ WantedBy=multi-user.target
 UNIT_EOF
 }
 
+remove_legacy() {
+	if [ -f "$LEGACY_UNIT" ]; then
+		log "Removing old service plachataa-web (project renamed)"
+		sudo systemctl disable --now plachataa-web >/dev/null 2>&1 || true
+		sudo rm -f "$LEGACY_UNIT"
+		sudo systemctl daemon-reload
+	fi
+}
+
 cmd_install() {
 	need_systemd
 	[ -x "$ROOT/.venv/bin/python" ] || die "no .venv; run ./install.sh first"
+	remove_legacy
 	ensure_env_file
 	write_unit
 	sudo systemctl daemon-reload
@@ -101,6 +112,7 @@ cmd_install() {
 
 cmd_uninstall() {
 	need_systemd
+	remove_legacy
 	if [ -f "$UNIT" ]; then
 		log "Removing service $NAME"
 		sudo systemctl disable --now "$NAME" >/dev/null 2>&1 || true

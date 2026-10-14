@@ -1,7 +1,7 @@
 # Nginx Proxy Manager
 
 Settings for a proxy host that forwards to the gaming PC running
-Plachataa Web.
+Seed-VC-Web.
 
 ## Details tab
 
@@ -40,7 +40,7 @@ loading, so these are belt and braces.
 
 ## Access List (optional)
 
-If you do not set `PLACHATAA_BASIC_AUTH` on the gaming PC, protect the
+If you do not set `SEEDVC_WEB_BASIC_AUTH` on the gaming PC, protect the
 host with an NPM Access List (Details tab → Access List) so it is not
 open to the internet.
 

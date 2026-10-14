@@ -17,8 +17,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-tmp = tempfile.mkdtemp(prefix="plachataa-test-")
-os.environ["PLACHATAA_DATA_DIR"] = tmp
+tmp = tempfile.mkdtemp(prefix="seedvcweb-test-")
+os.environ["SEEDVC_WEB_DATA_DIR"] = tmp
 
 from server import settings  # noqa: E402
 from server import jobs as jobs_mod  # noqa: E402

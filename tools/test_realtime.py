@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-os.environ["PLACHATAA_DATA_DIR"] = tempfile.mkdtemp(prefix="plachataa-rt-")
+os.environ["SEEDVC_WEB_DATA_DIR"] = tempfile.mkdtemp(prefix="seedvcweb-rt-")
 
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
